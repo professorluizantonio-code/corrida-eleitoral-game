@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISPUTA POLÍTICA: A GRANDE CORRIDA ELEITORAL - JOGO FINAL</title>
+    <style>
+        /* CSS BÁSICO E RESPONSIVO (MOBILE FIRST) */
+        :root {
+            --cor-principal: #FFD700; /* Ouro */
+            --cor-fundo: #0c0d1b; /* Azul Escuro */
+            --cor-acao: #FF4500; /* Laranja Vívido */
+            --cor-texto: #E0E0E0;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: var(--cor-principal);
+            font-size: 1.8em;
+            border-bottom: 3px solid var(--cor-acao);
+            padding-bottom: 10px;
+        }
+        #mesa-jogadas {
+            background-color: #1e2b3c;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid var(--cor-principal);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        #btn-corrida, .btn-pix {
+            background-color: var(--cor-acao);
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            width: 90%;
+            margin-top: 15px;
+            box-shadow: 0 4px #c43600;
+        }
+        .paywall {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 3px dashed var(--cor-principal);
+            margin-top: 30px;
+            display: none;
+        }
+        .paywall p {
+            color: var(--cor-principal);
+            font-weight: bold;
+        }
+        .quiz-box {
+            background-color: #333;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: none; /* Esconde o quiz inicialmente */
+        }
+        .quiz-box button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .quiz-box button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DISPUTA POLÍTICA: A GRANDE CORRIDA ELEITORAL</h1>
+
+        <div id="mesa-jogadas">
+            <h2>Mesa de Jogadas (Placar Local)</h2>
+            <p><strong>Atleta:</strong> Dr. Data (Federal)</p>
+            <div class="stats">
+                <div>Metragem Total: <span id="metragem-total">0</span>m</div>
+                <div>TOCS: <span id="saldo-tocs">0</span></div>
+            </div>
+            <div class="stats">
+                <div>Jogadas Grátis: <span id="jogadas-restantes">5</span></div>
+                <div>Status: <span id="status-premium" style="color:#FF4500;">GRÁTIS</span></div>
+            </div>
+        </div>
+        
+        <div id="quiz-area" class="quiz-box">
+            <p id="quiz-pergunta" style="font-size: 1.2em; font-weight: bold;"></p>
+            <div id="quiz-opcoes"></div>
+        </div>
+
+        <button id="btn-corrida" onclick="iniciarCorrida()">INICIAR PRÓXIMA CORRIDA (QUIZ)</button>
+
+        <div id="paywall-pix" class="paywall">
+            <p>🚨 LICENÇA EXPIRADA! 🚨</p>
+            <p>Você completou as 5 Jogadas Grátis.</p>
+            <button class="btn-pix" onclick="simularPagamentoPix()">R$ 5,00 - Libere 20 Jogadas Extras!</button>
+            <p style="margin-top: 10px; color: #aaa;">Chave Pix: 42721539000</p>
+        </div>
+
+        <p style="margin-top: 20px; color: #aaa;">
+            *Esta é a versão FINAL de demonstração gratuita (Placar Local).
+        </p>
+    </div>
+
+    <script>
+        // LÓGICA JAVASCRIPT FINAL (ARMAZENAMENTO LOCAL)
+        const JOGADAS_MAX = 5;
+        const JOGADAS_PREMIO = 20;
+        const CHAVE_PIX = "42721539000"; 
+        
+        // Banco de perguntas (Simplificado para o Front-End)
+        const bancoPerguntas = [
+            { id: "C1", tipo: "CONHECIMENTO", metros: 300, texto: "Qual rio deu nome ao Tocantins?", opcoes: { A: "Araguaia", B: "Tocantins", C: "Xingu" }, correta: "B" },
+            { id: "S1", tipo: "SATIRA", metros: 100, texto: "O que acontece com promessas 30 dias após a posse?", opcoes: { A: "Virou lei", B: "Esquecida", C: "Em análise" }, correta: "B" },
+            { id: "C2", tipo: "CONHECIMENTO", metros: 300, texto: "Capital planejada do Tocantins?", opcoes: { A: "Gurupi", B: "Palmas", C: "Araguaína" }, correta: "B" },
+            { id: "S2", tipo: "SATIRA", metros: 100, texto: "O maior inimigo da 'transparência' é...", opcoes: { A: "O fiscal", B: "O sigilo centenário", C: "O servidor" }, correta: "B" }
+        ];
+
+        // --- Funções de Estado (LocalStorage) ---
+
+        function getEstado(chave, valorPadrao) {
+            const valor = localStorage.getItem(chave);
+            return valor !== null ? JSON.parse(valor) : valorPadrao;
+        }
+
+        function setEstado(chave, valor) {
+            localStorage.setItem(chave, JSON.stringify(valor));
+        }
+
+        // Inicializa/Carrega o estado
+        let estado = getEstado('estadoJogoPolitica', {
+            jogadasFeitas: 0,
+            jogadasExtras: 0,
+            saldoTOCS: 0,
+            metragemTotal: 0,
+            acessoPremium: false
+        });
+
+        function calcularJogadasRestantes() {
+            if (estado.acessoPremium || estado.jogadasExtras > 0) {
+                return estado.jogadasExtras > 0 ? estado.jogadasExtras : "ILIMITADO";
+            }
+            return JOGADAS_MAX - estado.jogadasFeitas;
+        }
+
+        function atualizarUI() {
+            const restantes = calcularJogadasRestantes();
+            document.getElementById('jogadas-restantes').textContent = restantes;
+            document.getElementById('saldo-tocs').textContent = estado.saldoTOCS;
+            document.getElementById('metragem-total').textContent = estado.metragemTotal;
+            document.getElementById('status-premium').textContent = estado.acessoPremium ? 'PREMIUM' : (estado.jogadasExtras > 0 ? 'EXTRA' : 'GRÁTIS');
+            document.getElementById('status-premium').style.color = estado.acessoPremium || estado.jogadasExtras > 0 ? '#32CD32' : '#FF4500';
+
+            // Paywall Logic
+            if (restantes !== "ILIMITADO" && restantes <= 0) {
+                document.getElementById('btn-corrida').style.display = 'none';
+                document.getElementById('paywall-pix').style.display = 'block';
+            } else {
+                document.getElementById('btn-corrida').style.display = 'block';
+                document.getElementById('paywall-pix').style.display = 'none';
+                document.getElementById('quiz-area').style.display = 'none';
+            }
+        }
+        
+        // --- Lógica do Quiz e Corrida ---
+
+        function iniciarCorrida() {
+            const restantes = calcularJogadasRestantes();
+            if (restantes !== "ILIMITADO" && restantes <= 0) {
+                // Se por acaso o botão aparecer, garante que ele pare.
+                return; 
+            }
+
+            // Esconde o botão de iniciar e mostra a área do quiz
+            document.getElementById('btn-corrida').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+
+            // Seleciona uma pergunta aleatória
+            const pergunta = bancoPerguntas[Math.floor(Math.random() * bancoPerguntas.length)];
+            
+            document.getElementById('quiz-pergunta').textContent = pergunta.texto;
+            const opcoesDiv = document.getElementById('quiz-opcoes');
+            opcoesDiv.innerHTML = '';
+            
+            for (const key in pergunta.opcoes) {
+                const btn = document.createElement('button');
+                btn.textContent = `${key}) ${pergunta.opcoes[key]}`;
+                btn.onclick = () => responderQuiz(pergunta, key);
+                opcoesDiv.appendChild(btn);
+            }
+        }
+
+        function responderQuiz(pergunta, resposta) {
+            const acertou = resposta === pergunta.correta;
+            const metrosGanhos = acertou ? pergunta.metros : 0;
+            const tocsGanhos = acertou ? 10 : 0;
+            
+            // 1. Atualiza o estado
+            estado.metragemTotal += metrosGanhos;
+            estado.saldoTOCS += tocsGanhos;
+
+            if (!estado.acessoPremium) {
+                if (estado.jogadasExtras > 0) {
+                    estado.jogadasExtras--;
+                } else {
+                    estado.jogadasFeitas++;
+                }
+            }
+            
+            // 2. Salva e atualiza UI
+            setEstado('estadoJogoPolitica', estado);
+            
+            let feedback = acertou 
+                ? `✅ ACERTOU! Ganhou ${metrosGanhos}m para o Dr. Data e ${tocsGanhos} TOCS!`
+                : `❌ ERROU! O Dr. Data não avançou desta vez.`;
+                
+            alert(feedback);
+            
+            // 3. Reseta a UI do Quiz e mostra o botão de corrida
+            document.getElementById('quiz-area').style.display = 'none';
+            document.getElementById('btn-corrida').style.display = 'block';
+            
+            atualizarUI();
+        }
+
+        // --- Lógica do Pix Paywall (Simulação) ---
+        function simularPagamentoPix() {
+            // Ação de copiar chave
+            navigator.clipboard.writeText(CHAVE_PIX).then(() => {
+                alert("✅ Chave Pix copiada. Simule a doação de R$ 5,00. Clique OK para liberar o acesso (Simulação de confirmação de pagamento).");
+                
+                // Simulação de liberação após o pagamento ser realizado
+                // O usuário ganha 20 jogadas extras (não ilimitadas)
+                estado.jogadasExtras += JOGADAS_PREMIO;
+                estado.jogadasFeitas = 0; // Zera as jogadas free, usando agora as extras.
+                setEstado('estadoJogoPolitica', estado);
+                
+                document.getElementById('paywall-pix').style.display = 'none';
+                alert(`Acesso Liberado! ${JOGADAS_PREMIO} Jogadas Extras Adicionadas.`);
+                
+                atualizarUI();
+            });
+        }
+
+        // Inicializa a UI ao carregar
+        document.addEventListener('DOMContentLoaded', atualizarUI);
+    </script>
+</body>
+</html>
